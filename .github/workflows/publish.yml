@@ -1,0 +1,64 @@
+name: Publish signed Windows release
+on:
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - name: Fetch the tagged Windows package only
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          git lfs install --local
+          git lfs pull --include="releases/${VERSION}/Sromoto-${VERSION#v}-windows.zip" --exclude=""
+      - name: Verify release signature and package
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          python -m pip install --disable-pip-version-check 'cryptography>=42,<47'
+          python - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+          version = os.environ['VERSION']
+          folder = Path('releases') / version
+          manifest_bytes = (folder / 'release.json').read_bytes()
+          signature = base64.b64decode((folder / 'release.sig').read_bytes().strip(), validate=True)
+          public = base64.b64decode('3HyY16HpkaZCMmJ4J58PJx2Rb0S/YXmdNO210+GlGKI=')
+          Ed25519PublicKey.from_public_bytes(public).verify(signature, manifest_bytes)
+          manifest = json.loads(manifest_bytes)
+          expected = f'Sromoto-{version[1:]}-windows.zip'
+          if (manifest['version'] != version[1:] or manifest['asset'] != expected
+                  or manifest['format'] != 'windows-onedir-zip'):
+              raise SystemExit('Invalid signed release identity')
+          archive = folder / expected
+          if archive.stat().st_size != manifest['size']:
+              raise SystemExit('Package size differs from signed manifest')
+          digest = hashlib.sha256()
+          with archive.open('rb') as source:
+              for chunk in iter(lambda: source.read(1024 * 1024), b''):
+                  digest.update(chunk)
+          if digest.hexdigest() != manifest['sha256']:
+              raise SystemExit('Package checksum differs from signed manifest')
+          PY
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          gh release create "$VERSION" \
+            "releases/$VERSION/release.json" \
+            "releases/$VERSION/release.sig" \
+            "releases/$VERSION/Sromoto-${VERSION#v}-windows.zip" \
+            --verify-tag --title "Sromoto ${VERSION#v}" --generate-notes
