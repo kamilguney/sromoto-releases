@@ -61,4 +61,5 @@ jobs:
             "releases/$VERSION/release.json" \
             "releases/$VERSION/release.sig" \
             "releases/$VERSION/Sromoto-${VERSION#v}-windows.zip" \
-            --verify-tag --title "Sromoto ${VERSION#v}" --generate-notes
+            --verify-tag --title "Sromoto ${VERSION#v}" \
+            --notes-file "releases/$VERSION/notes.md"
