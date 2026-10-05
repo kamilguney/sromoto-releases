@@ -51,6 +51,10 @@ jobs:
                   digest.update(chunk)
           if digest.hexdigest() != manifest['sha256']:
               raise SystemExit('Package checksum differs from signed manifest')
+          setup = folder / 'SromotoSetup.exe'
+          expected_setup = manifest.get('setup_exe_sha256')
+          if not expected_setup or hashlib.sha256(setup.read_bytes()).hexdigest() != expected_setup:
+              raise SystemExit('Setup checksum differs from signed manifest')
           PY
       - name: Publish GitHub Release
         env:
@@ -61,5 +65,6 @@ jobs:
             "releases/$VERSION/release.json" \
             "releases/$VERSION/release.sig" \
             "releases/$VERSION/Sromoto-${VERSION#v}-windows.zip" \
+            "releases/$VERSION/SromotoSetup.exe" \
             --verify-tag --title "Sromoto ${VERSION#v}" \
             --notes-file "releases/$VERSION/notes.md"
