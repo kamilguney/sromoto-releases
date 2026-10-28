@@ -1,0 +1,2 @@
+e57760e2d1cc863ecae2919f5eb49e1c0ed0adf5494ef58a9073b56199807472  Sromoto-4.3.7-windows.zip
+88c53849baa1c9fdb2d1e3fc2660f4dd6cf1d035a8d1c41d61389039ef6863f2  SromotoSetup.exe
