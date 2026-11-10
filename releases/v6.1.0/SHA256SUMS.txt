@@ -1,0 +1,2 @@
+750a596d430ddb48d4ac15fb7e1ed7f843f95b6a2db95fc9a2ccb727cf8a582f  Sromoto-6.1.0-windows.zip
+f29253dd43ed013dd8032b471f89fc706d585cb8a5261d05fd8c232d0fa987f7  SromotoSetup.exe
